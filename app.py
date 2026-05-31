@@ -10,6 +10,27 @@ import plotly.graph_objects as go
 from collections import Counter
 from datetime import datetime
 import os
+
+# --- INICIO DE INTEGRACIÓN: Módulo de Convergencia (SignalMap IA) ---
+
+def calcular_convergencia(secuencia, codigo_base, temperatura):
+    """
+    Calcula el índice de convergencia: (Sumatoria * Código) / Temperatura
+    """
+    if not secuencia or temperatura == 0:
+        return 0.0
+    
+    sumatoria = sum(secuencia)
+    resultado = (sumatoria * codigo_base) / temperatura
+    return round(resultado, 2)
+
+# Configuración de variables globales para el cálculo
+# Puedes actualizar estos valores dinámicamente cuando el usuario suba fotos
+DEFAULT_CODIGO = 7122
+DEFAULT_SECUENCIA = [8, 4, 3, 11, 50, 5] 
+
+# --- FIN DE INTEGRACIÓN: Módulo de Convergencia ---
+
 # ========================================================
 # SEGURIDAD Y CONTROL DE USUARIOS
 # ========================================================
