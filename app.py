@@ -77,7 +77,6 @@ GAME_CONFIG = {
         "columnas": ["num_1","num_2","num_3","num_4","num_5"],
         "es_lineal": True
     },
-
     "Chispazo": {
         "min": 1,
         "max": 28,
@@ -86,7 +85,6 @@ GAME_CONFIG = {
         "columnas": ["num_1","num_2","num_3","num_4","num_5"],
         "es_lineal": False
     },
-
     "Melate": {
         "min": 1,
         "max": 56,
@@ -95,7 +93,6 @@ GAME_CONFIG = {
         "columnas": ["num_1","num_2","num_3","num_4","num_5","num_6"],
         "es_lineal": False
     },
-
     "Revancha": {
         "min": 1,
         "max": 56,
@@ -104,7 +101,6 @@ GAME_CONFIG = {
         "columnas": ["num_1","num_2","num_3","num_4","num_5","num_6"],
         "es_lineal": False
     },
-
     "Revanchita": {
         "min": 1,
         "max": 56,
@@ -113,7 +109,6 @@ GAME_CONFIG = {
         "columnas": ["num_1","num_2","num_3","num_4","num_5","num_6"],
         "es_lineal": False
     },
-
     "Melate Retro": {
         "min": 1,
         "max": 39,
@@ -122,7 +117,6 @@ GAME_CONFIG = {
         "columnas": ["num_1","num_2","num_3","num_4","num_5","num_6"],
         "es_lineal": False
     },
-
     "Gana Gato": {
         "min": 1,
         "max": 5,
@@ -132,6 +126,7 @@ GAME_CONFIG = {
         "es_lineal": False
     }
 }
+
 # ========================================================
 # REINGENIERÍA: MOTOR ESPEJO CALIBRADO POR FRONTERA MÁXIMA
 # ========================================================
@@ -140,19 +135,15 @@ def calcular_espejo_calibrado(lista_numeros, game):
     max_permitido = config["max"]
     min_permitido = config["min"]
     
-    # Mapeo matemático base por complementos moleculares de 9
     mapa_digitos = {"0":"5", "1":"6", "2":"7", "3":"8", "4":"9", "5":"0", "6":"1", "7":"2", "8":"3", "9":"4"}
     
     resultado_espejo = []
     for n in lista_numeros:
-        # Transformación por dígitos espejo
         str_n = str(n)
         str_espejo = "".join([mapa_digitos[d] if d in mapa_digitos else d for d in str_n])
         num_espejo = int(str_espejo)
         
-        # Filtro de Frontera Estricta (Ajuste modular si sobrepasa el número máximo del sorteo)
         if num_espejo > max_permitido:
-            # Si se pasa del límite (ej. 70 en Chispazo), recalculamos usando el residuo matemático
             num_espejo = min_permitido + (num_espejo % (max_permitido - min_permitido + 1))
         
         resultado_espejo.append(num_espejo)
@@ -172,12 +163,13 @@ def cargar_sorteo_real(game):
     rows = [list(np.random.randint(config["min"], config["max"] + 1, config["cantidad"])) for _ in range(500)]
     return pd.DataFrame(rows, columns=cols), cols
 
-# MENU LATERAL RE-ESTRUCTURADO
+# MENU LATERAL RE-ESTRUCTURADO (Con la nueva capa agregada)
 menu = st.sidebar.radio("Navegación", [
     "📖 Diario de Señales", 
     "📊 Timeline de Hoy", 
     "🏠 Dashboard Global", 
-    "🎯 Sorteo Número Sugerido", 
+    "🎯 Sorteo Número Sugerido",
+    "⚙️ Motor de Calibración (4 Capas)",
     "📸 Evidencia & Diario de Aciertos"
 ])
 
@@ -210,7 +202,6 @@ elif menu == "📊 Timeline de Hoy":
 elif menu == "🏠 Dashboard Global":
     st.title("🧠 Matriz Global de Convergencia & Indexación Fractal")
     
-    # Marcador general de validación de tiros directos del día
     total_aciertos_dia = sum([1 for b in st.session_state.boletos_auditados if b["estado"] == "🎯 ACERTADO"])
     if total_aciertos_dia > 0:
         st.markdown(f"### 🎉 SISTEMA VERIFICADO SEGURO: {total_aciertos_dia} Sorteos Validados con Éxito hoy ✔️")
@@ -224,7 +215,6 @@ elif menu == "🏠 Dashboard Global":
         freq = pd.Series(valores_todos).value_counts().sort_index()
         dominante = int(freq.idxmax()) if len(freq) > 0 else 0
         
-        # Verificamos si hay una palomita registrada para este sorteo específico
         has_match = any([b for b in st.session_state.boletos_auditados if b["sorteo"] == game and b["estado"] == "🎯 ACERTADO"])
         marcador_exito = " ✔️ (TIRO DIRECTO)" if has_match else ""
 
@@ -253,7 +243,7 @@ elif menu == "🏠 Dashboard Global":
         fig_fractal.update_layout(template="plotly_dark", xaxis=dict(range=[-2.1, 0.6]), yaxis=dict(range=[-1.3, 1.3]), height=500)
         st.plotly_chart(fig_fractal, use_container_width=True)
 
-# 4. SORTEO SUGERIDO (DUALIDAD ESPEJO BLINDADA CONTRA SOBREPASAR MÁXIMOS)
+# 4. SORTEO SUGERIDO
 elif menu == "🎯 Sorteo Número Sugerido":
     st.title("🎯 Sorteo Número Sugerido e Ingeniería de Resonancia")
     motor_f = MetaPatternFractal()
@@ -269,7 +259,6 @@ elif menu == "🎯 Sorteo Número Sugerido":
         contador = Counter(todos)
         sugeridos = [int(x[0]) for x in contador.most_common(GAME_CONFIG[game]["cantidad"])]
         
-        # AJUSTE EVALUADO: El espejo se adapta estrictamente a las reglas del juego
         duales_espejo = calcular_espejo_calibrado(sugeridos, game)
 
         x_sug, y_sug = motor_f.transformar_secuencia(sugeridos)
@@ -287,7 +276,60 @@ elif menu == "🎯 Sorteo Número Sugerido":
         st.markdown(f'<div class="metric-box">📊 Coincidencia Histórica: <b>{coincidencia_geom}%</b> | Distancia: <b>{distancia_promedio:.4f} u</b></div>', unsafe_allow_html=True)
 
 # ========================================================
-# NUEVO MÓDULO 5: HISTORIAL DE ACERTOS, ESCANEO Y PLANILLA INTERACTIVA
+# NUEVA CAPA: MOTOR DE CALIBRACIÓN (LAS 4 CAPAS)
+# ========================================================
+elif menu == "⚙️ Motor de Calibración (4 Capas)":
+    st.title("⚙️ Motor de Calibración y Filtrado (4 Capas)")
+    st.caption("Aplica las 4 capas inquebrantables de validación matemática a tus señales.")
+    
+    colA, colB = st.columns(2)
+    with colA:
+        constante = st.text_input("Código de Victoria Constante", value="7122")
+        dia_mes = st.number_input("Día del mes (Ej. 31)", min_value=1, max_value=31, value=datetime.today().day)
+        humedad = st.number_input("Humedad Actual (%)", min_value=0, max_value=100, value=3)
+    
+    with colB:
+        st.write("Sincronía (Ej. Alarma 7:11)")
+        sync1 = st.number_input("Valor 1 (Ej. 7)", min_value=0, value=7)
+        sync2 = st.number_input("Valor 2 (Ej. 11)", min_value=0, value=11)
+        error_toggle = st.checkbox("⚠️ Hubo error/bloqueo hoy (Activar Volatilidad +/- 1)", value=True)
+        rango_maximo = st.selectbox("Límite del Sorteo", [28, 39, 56], index=0)
+
+    if st.button("🚀 Procesar Secuencia Crítica", use_container_width=True):
+        matriz = set()
+        
+        # PROTOCOLO 4: Integridad Constante (Raíz Sumada)
+        if len(constante) >= 2:
+            raiz_sumada = int(constante[0]) + int(constante[1])
+            matriz.add(raiz_sumada)
+            
+        # PROTOCOLO 1: Descomposición Temporal (Si humedad baja y día > 9)
+        if humedad < 5 and dia_mes > 9:
+            str_dia = str(dia_mes)
+            matriz.add(int(str_dia[0]))
+            matriz.add(int(str_dia[1]))
+            
+        # PROTOCOLO 2: Fusión de Entorno
+        if sync1 > 0 and sync2 > 0:
+            matriz.add(sync1 + sync2)
+            
+        # PROTOCOLO 3: Regulación de Entropía
+        cierre = int(constante[-2:]) if len(constante) >= 2 else 0
+        if error_toggle:
+            matriz.add(max(1, cierre - 1))
+            matriz.add(cierre + 1)
+        else:
+            matriz.add(cierre)
+            
+        # Limpieza de matriz (Ordenar y limitar al rango del sorteo)
+        secuencia_final = sorted([n for n in matriz if 1 <= n <= rango_maximo])
+        
+        st.success("Matriz Generada Exitosamente")
+        st.markdown(f"### 🎲 Secuencia Filtrada: **{', '.join(map(str, secuencia_final))}**")
+        st.caption("Estos nodos han pasado por las 4 capas estandarizadas. Cópialos a tu Diario de Señales.")
+
+# ========================================================
+# MÓDULO 5: HISTORIAL DE ACERTOS, ESCANEO Y PLANILLA INTERACTIVA
 # ========================================================
 elif menu == "📸 Evidencia & Diario de Aciertos":
     st.title("📸 Evidencia de Tiros Directos & Auditoría Visual")
@@ -306,7 +348,6 @@ elif menu == "📸 Evidencia & Diario de Aciertos":
                 lista_jugados = [int(x.strip()) for x in numeros_boleto.split(",") if x.strip().isdigit()]
                 lista_ganadores = [int(x.strip()) for x in numeros_ganadores.split(",") if x.strip().isdigit()]
                 
-                # Verificación de aciertos mínimos para declarar éxito en el dashboard
                 coincidentes = list(set(lista_jugados) & set(lista_ganadores))
                 estado_tiro = "🎯 ACERTADO" if len(coincidentes) >= 2 else "❌ DESVIADO"
                 
@@ -329,10 +370,8 @@ elif menu == "📸 Evidencia & Diario de Aciertos":
             
             config_juego = GAME_CONFIG[ultimo_b['sorteo']]
             
-            # DISEÑO: Construcción de la Cuadrícula Tipo Planilla del Boleto Real
             st.markdown("##### 🏁 Mapa de Marcación (✖️ Fallado / ✔️ Acertado)")
             
-            # Definir dimensiones de la cuadrícula según el rango de juego
             min_n, max_n = config_juego["min"], config_juego["max"]
             
             if min_n == 0 and max_n == 9: # Formato Lineal Tris
