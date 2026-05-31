@@ -10,6 +10,91 @@ import plotly.graph_objects as go
 from collections import Counter
 from datetime import datetime
 import os
+# ========================================================
+# SEGURIDAD Y CONTROL DE USUARIOS
+# ========================================================
+
+import os
+from datetime import datetime
+
+USUARIOS = {
+    "andrew": "7122",
+    "javier": "8514"
+}
+
+if "autenticado" not in st.session_state:
+    st.session_state["autenticado"] = False
+
+if "usuario" not in st.session_state:
+    st.session_state["usuario"] = None
+
+
+def registrar_log(evento):
+
+    try:
+
+        archivo = "logs_usuarios.csv"
+
+        fila = pd.DataFrame([{
+            "fecha": datetime.now(),
+            "usuario": st.session_state["usuario"],
+            "evento": evento
+        }])
+
+        if os.path.exists(archivo):
+            fila.to_csv(
+                archivo,
+                mode="a",
+                header=False,
+                index=False
+            )
+        else:
+            fila.to_csv(
+                archivo,
+                index=False
+            )
+
+    except Exception as e:
+        print(e)
+
+
+def login():
+
+    st.title("🔐 SIGNALMAP IA")
+
+    usuario = st.text_input("Usuario")
+
+    password = st.text_input(
+        "Contraseña",
+        type="password"
+    )
+
+    if st.button("Ingresar"):
+
+        usuario = usuario.lower()
+
+        if (
+            usuario in USUARIOS and
+            USUARIOS[usuario] == password
+        ):
+
+            st.session_state["autenticado"] = True
+            st.session_state["usuario"] = usuario
+
+            registrar_log("Inicio de sesión")
+
+            st.rerun()
+
+        else:
+
+            st.error(
+                "Usuario o contraseña incorrectos"
+            )
+
+
+if not st.session_state["autenticado"]:
+    login()
+    st.stop()
 
 # Importación segura del Motor Fractal
 try:
