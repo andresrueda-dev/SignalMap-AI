@@ -433,6 +433,65 @@ elif menu == "🏠 Dashboard Global":
         fig_fractal = px.scatter(pd.DataFrame(puntos_mapeados), x="Eje X", y="Eje Y", color="Capa")
         fig_fractal.update_layout(template="plotly_dark", xaxis=dict(range=[-2.1, 0.6]), yaxis=dict(range=[-1.3, 1.3]), height=500)
         st.plotly_chart(fig_fractal, use_container_width=True)
+        st.markdown("---")
+
+st.subheader("⚡ Mandelbrot Sincrónico - Últimos 7 Días")
+from datetime import timedelta
+
+motor_sync = MetaPatternFractal()
+puntos_sync = []
+
+fecha_limite = datetime.now() - timedelta(days=7)
+
+for game in GAME_CONFIG.keys():
+    try:
+        df, cols = cargar_sorteo_real(game)
+
+        if "fecha" not in df.columns:
+            continue
+
+        df["fecha"] = pd.to_datetime(
+            df["fecha"],
+            dayfirst=True,
+            errors="coerce"
+        )
+
+        df_semana = df[df["fecha"] >= fecha_limite]
+
+        for fila in df_semana[cols].values.tolist():
+            x, y = motor_sync.transformar_secuencia(fila)
+            puntos_sync.append({
+                "Eje X": x,
+                "Eje Y": y,
+                "Capa": f"7D {game}"
+            })
+
+    except Exception as e:
+        st.warning(f"Error procesando {game}: {e}")
+
+if len(puntos_sync) > 0:
+    st.metric(
+        "Señales Analizadas (7 días)",
+        len(puntos_sync)
+    )
+
+    fig_sync = px.scatter(
+        pd.DataFrame(puntos_sync),
+        x="Eje X",
+        y="Eje Y",
+        color="Capa"
+    )
+
+    fig_sync.update_layout(
+        template="plotly_dark",
+        xaxis=dict(range=[-2.1, 0.6]),
+        yaxis=dict(range=[-1.3, 1.3]),
+        height=550
+    )
+
+    st.plotly_chart(
+        fig_sync,
+        use_container_width=True
 
 # 4. SORTEO SUGERIDO (DUALIDAD ESPEJO BLINDADA CONTRA SOBREPASAR MÁXIMOS)
 elif menu == "🎯 Sorteo Número Sugerido":
