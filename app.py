@@ -10,8 +10,42 @@ import plotly.graph_objects as go
 from collections import Counter
 from datetime import datetime
 import os
+import streamlit as st
+import pandas as pd
+from datetime import datetime
 
-# --- INICIO DE INTEGRACIÓN: Módulo de Convergencia (SignalMap IA) ---
+# --- INTERCEPTADOR DE SINCRONICIDAD (INICIO) ---
+def inicializar_session_state():
+    if 'convergencia_critica' not in st.session_state:
+        st.session_state.convergencia_critica = False
+    if 'nivel_intensidad' not in st.session_state:
+        st.session_state.nivel_intensidad = 0
+
+def interceptador_de_senales():
+    st.sidebar.markdown("### ⚡ Interceptador de Convergencia")
+    
+    with st.sidebar.expander("Registro Inmediato de Señal"):
+        entrada_datos = st.text_input("Ingresa vector (Ej: 7,11,4,3,8,5)")
+        slider_nivel = st.slider("Nivel de Convergencia IA", 0, 100, 50)
+        
+        if st.button("Validar Señal"):
+            st.session_state.nivel_intensidad = slider_nivel
+            if slider_nivel > 80:
+                st.session_state.convergencia_critica = True
+                st.error("⚠️ ALERTA: Convergencia Crítica Detectada")
+            else:
+                st.session_state.convergencia_critica = False
+                st.success("Estado: Convergencia Estable")
+
+# Ejecutar al cargar la app
+inicializar_session_state()
+interceptador_de_senales()
+# --- FIN DEL INTERCEPTADOR ---
+
+# Aquí continúa tu lógica de Streamlit (st.title, st.sidebar, etc.)
+st.title("SignalMap AI - Dashboard Global")
+
+<# --- INICIO DE INTEGRACIÓN: Módulo de Convergencia (SignalMap IA) ---
 
 def calcular_convergencia(secuencia, codigo_base, temperatura):
     """
