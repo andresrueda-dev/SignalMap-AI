@@ -11,6 +11,57 @@ from collections import Counter
 from datetime import datetime
 import os
 
+def modulo_registro_impactos():
+    """
+    Módulo para registrar la cercanía de las apuestas a los 43 pilares.
+    Se integra como un componente al final de la app.
+    """
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Registro de Impactos de Pilares")
+    
+    archivo_csv = "impactos_historicos.csv"
+    
+    # Formulario para capturar los datos del nuevo impacto
+    with st.sidebar.form("form_registro"):
+        fecha = st.date_input("Fecha")
+        sorteo = st.text_input("Sorteo")
+        x_val = st.number_input("Coordenada X", format="%.2f")
+        y_val = st.number_input("Coordenada Y", format="%.2f")
+        pilar_id = st.number_input("Pilar Cercano (ID)", min_value=1, max_value=43)
+        distancia = st.number_input("Distancia al Pilar", format="%.2f")
+        premiado = st.checkbox("¿Fue Premiado?")
+        
+        submitted = st.form_submit_button("Registrar Impacto")
+        
+        if submitted:
+            nuevo_dato = {
+                "Fecha": [str(fecha)],
+                "Sorteo": [sorteo],
+                "X": [x_val],
+                "Y": [y_val],
+                "Pilar_ID": [pilar_id],
+                "Distancia": [distancia],
+                "Premiado": [premiado]
+            }
+            df_nuevo = pd.DataFrame(nuevo_dato)
+            
+            # Guardar/Añadir al CSV
+            if not os.path.exists(archivo_csv):
+                df_nuevo.to_csv(archivo_csv, index=False)
+            else:
+                df_nuevo.to_csv(archivo_csv, mode='a', header=False, index=False)
+            st.success("Impacto registrado correctamente.")
+
+    # Visualización del historial
+    if os.path.exists(archivo_csv):
+        if st.checkbox("Mostrar historial de impactos"):
+            df_historial = pd.read_csv(archivo_csv)
+            st.dataframe(df_historial)
+
+# Para invocarlo, añade esta línea al final de tu app.py principal:
+# modulo_registro_impactos()
+ 
+
 # Importación segura del Motor Fractal
 try:
     from modules.motor_fractal import MetaPatternFractal
