@@ -11,6 +11,95 @@ from collections import Counter
 from datetime import datetime
 import os
 
+def check_alerta_proximidad(x_nuevo, y_nuevo, pilares_df, umbral=5.0):
+    """
+    Analiza si una nueva coordenada está dentro del radio de influencia 
+    de un 'Pilar Ganador' o un 'Pilar Constante'.
+    """
+    # Calculamos la distancia mínima a cualquier pilar
+    distancias = np.sqrt((pilares_df['X'] - x_nuevo)**2 + (pilares_df['Y'] - y_nuevo)**2)
+    min_dist = distancias.min()
+    idx_cercano = distancias.idxmin()
+    
+    if min_dist <= umbral:
+        st.sidebar.warning(f"⚠️ ¡ALERTA DE PROXIMIDAD! Estás a {min_dist:.2f} unidades del Pilar {idx_cercano}. ALTA PROBABILIDAD.")
+        return True, idx_cercano
+    else:
+        st.sidebar.info(f"Distancia al pilar más cercano: {min_dist:.2f}. Zona estable.")
+        return False, None
+
+def modulo_visualizacion_impactos(df_historico, df_impactos):
+    """
+    Superpone los impactos ganadores sobre la gráfica de dispersión.
+    df_historico: Tu base de datos principal.
+    df_impactos: Los registros que guardaste en 'impactos_historicos.csv'.
+    """
+    import matplotlib.pyplot as plt
+    
+    plt.figure(figsize=(10, 6))
+    
+    # 1. Dibujar todos los puntos históricos en gris tenue
+    plt.scatter(df_historico['X'], df_historico['Y'], c='gray', alpha=0.1, s=1)
+    
+    # 2. Resaltar los pilares constantes (nuestros 43 puntos) en amarillo
+    # (Asumiendo que tienes una lista de coordenadas de los 43 pilares)
+    plt.scatter(pilares_x, pilares_y, c='yellow', marker='*', s=100, label='Pilares Constantes')
+    
+    # 3. Resaltar los Impactos Premiados en color neón/verde
+    if not df_impactos.empty:
+        premiados = df_impactos[df_impactos['Premiado'] == True]
+        plt.scatter(premiados['X'], premiados['Y'], c='lime', s=150, edgecolors='white', label='Impacto Ganador')
+        
+    plt.title("Mapa de Estructura de Ganancia (Pilares vs. Resultados)")
+    plt.legend()
+    st.pyplot(plt)
+
+def modulo_entrada_masiva_inteligente():
+    """
+    Gestiona datos masivos detectando el sorteo automáticamente.
+    Formato esperado: TIPO_SORTEO,FECHA,NUMEROS
+    Ejemplo: TRIS,2026-06-09,12-15-22-30-45
+    """
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🚀 Ingesta Inteligente")
+    
+    datos_input = st.sidebar.text_area("Pega tus resultados aquí:", 
+                                       placeholder="TRIS,2026-06-09,12-15-22-30-45\nCHISPAZO,2026-06-09,05-10-15-20-25")
+    
+    if st.sidebar.button("Procesar y Calibrar"):
+        if datos_input:
+            archivo_historico = "base_datos_historica.csv"
+            lineas = datos_input.strip().split('\n')
+            registros = []
+            
+            for linea in lineas:
+                try:
+                    # El sistema separa automáticamente por comas
+                    partes = linea.split(',')
+                    sorteo = partes[0].upper()
+                    fecha = partes[1]
+                    numeros = partes[2]
+                    
+                    registros.append({"Fecha": fecha, "Sorteo": sorteo, "Resultado": numeros})
+                except Exception as e:
+                    st.sidebar.error(f"Error en línea: {linea}")
+            
+            # Guardado y ordenamiento
+            df_nuevos = pd.DataFrame(registros)
+            
+            if os.path.exists(archivo_historico):
+                df_maestro = pd.read_csv(archivo_historico)
+                df_maestro = pd.concat([df_maestro, df_nuevos], ignore_index=True)
+            else:
+                df_maestro = df_nuevos
+            
+            # Ordenar por fecha automáticamente antes de guardar
+            df_maestro['Fecha'] = pd.to_datetime(df_maestro['Fecha'])
+            df_maestro = df_maestro.sort_values(by='Fecha')
+            
+            df_maestro.to_csv(archivo_historico, index=False)
+            st.sidebar.success(f"¡Base calibrada! {len(registros)} registros añadidos y ordenados.")
+
 def modulo_registro_impactos():
     """
     Módulo para registrar la cercanía de las apuestas a los 43 pilares.
